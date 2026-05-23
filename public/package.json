@@ -1,7 +1,6 @@
 {
   "name": "omnisci-xai",
   "version": "1.0.0",
-  "description": "OMNISCI — Universal Knowledge AI powered by Grok (xAI)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
