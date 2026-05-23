@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OMNISCI — Universal Knowledge AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void: #020408;
+    --deep: #060d1a;
+    --cosmos: #0a1628;
+    --nebula-blue: #0d2545;
+    --star-gold: #c9a84c;
+    --star-bright: #f0d080;
+    --nova: #e8a030;
+    --pulsar: #4db8ff;
+    --quasar: #7ee8fa;
+    --plasma: #ff6b35;
+    --text-primary: #e8dcc8;
+    --text-dim: #8a7a60;
+    --text-faint: #3a3020;
+    --border: rgba(201,168,76,0.15);
+    --border-bright: rgba(201,168,76,0.4);
+    --glow: rgba(201,168,76,0.08);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; background:var(--void); color:var(--text-primary); font-family:'Crimson Pro',serif; overflow:hidden; }
+
+  #starfield { position:fixed; inset:0; z-index:0; pointer-events:none;
+    background: radial-gradient(ellipse at 20% 50%, rgba(13,37,69,0.6) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(77,184,255,0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(126,232,250,0.03) 0%, transparent 50%),var(--void); }
+  #starfield canvas { position:absolute; inset:0; }
+
+  #app { position:relative; z-index:1; height:100vh; display:grid;
+    grid-template-rows:auto 1fr auto;
+    grid-template-columns:260px 1fr;
+    grid-template-areas:"header header" "sidebar main" "sidebar input"; }
+
+  /* HEADER */
+  header { grid-area:header; display:flex; align-items:center; justify-content:space-between;
+    padding:16px 28px; border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg,rgba(6,13,26,0.95) 0%,rgba(2,4,8,0.8) 100%);
+    backdrop-filter:blur(20px); }
+
+  .logo { display:flex; align-items:center; gap:14px; }
+  .logo-orb { width:38px; height:38px; border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,var(--star-bright),var(--star-gold),#7a4a00);
+    box-shadow:0 0 20px rgba(201,168,76,0.5),0 0 60px rgba(201,168,76,0.15),inset 0 0 15px rgba(255,255,255,0.1);
+    animation:orb-pulse 4s ease-in-out infinite; flex-shrink:0; }
+  @keyframes orb-pulse {
+    0%,100%{box-shadow:0 0 20px rgba(201,168,76,0.5),0 0 60px rgba(201,168,76,0.15);}
+    50%{box-shadow:0 0 30px rgba(201,168,76,0.7),0 0 80px rgba(201,168,76,0.25),0 0 120px rgba(201,168,76,0.1);} }
+
+  .logo-text h1 { font-family:'Cinzel',serif; font-size:22px; font-weight:900;
+    letter-spacing:0.15em; color:var(--star-bright); text-shadow:0 0 30px rgba(201,168,76,0.6); }
+  .logo-text p { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.3em;
+    color:var(--text-dim); text-transform:uppercase; margin-top:1px; }
+
+  .header-stats { display:flex; gap:24px; align-items:center; }
+  .stat { text-align:right; }
+  .stat-value { font-family:'Cinzel',serif; font-size:13px; color:var(--star-gold); letter-spacing:0.05em; }
+  .stat-label { font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--text-dim); letter-spacing:0.2em; text-transform:uppercase; }
+
+  /* SIDEBAR */
+  aside { grid-area:sidebar; border-right:1px solid var(--border);
+    background:rgba(6,13,26,0.7); backdrop-filter:blur(10px); overflow-y:auto; padding:20px 0; }
+  aside::-webkit-scrollbar{width:3px;} aside::-webkit-scrollbar-track{background:transparent;}
+  aside::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:2px;}
+
+  .sidebar-section { padding:0 16px 20px; }
+  .sidebar-label { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:0.3em;
+    color:var(--text-dim); text-transform:uppercase; padding:0 4px 10px;
+    border-bottom:1px solid var(--border); margin-bottom:12px; }
+
+  .domain-btn { display:flex; align-items:center; gap:10px; width:100%; padding:9px 10px;
+    background:transparent; border:1px solid transparent; border-radius:6px;
+    color:var(--text-primary); font-family:'Crimson Pro',serif; font-size:14px;
+    cursor:pointer; text-align:left; transition:all 0.2s; margin-bottom:3px; }
+  .domain-btn:hover { background:var(--glow); border-color:var(--border); color:var(--star-bright); }
+  .domain-btn.active { background:rgba(201,168,76,0.08); border-color:var(--border-bright); color:var(--star-bright); }
+  .domain-icon{font-size:16px;flex-shrink:0;}
+  .domain-name{font-size:13px;line-height:1.2;}
+  .domain-sub{font-size:10px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;display:block;}
+
+  .new-chat-btn { display:flex; align-items:center; justify-content:center; gap:8px;
+    width:calc(100% - 32px); margin:0 16px 20px; padding:10px;
+    background:transparent; border:1px solid var(--border-bright); border-radius:8px;
+    color:var(--star-gold); font-family:'Cinzel',serif; font-size:11px; letter-spacing:0.15em;
+    cursor:pointer; transition:all 0.3s; text-transform:uppercase; }
+  .new-chat-btn:hover { background:rgba(201,168,76,0.1); box-shadow:0 0 20px rgba(201,168,76,0.1); }
+
+  /* MAIN */
+  main { grid-area:main; overflow-y:auto; padding:30px 40px; display:flex; flex-direction:column; gap:28px; }
+  main::-webkit-scrollbar{width:4px;} main::-webkit-scrollbar-track{background:transparent;}
+  main::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+  /* WELCOME */
+  .welcome { display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-height:60vh; text-align:center; animation:fade-up 1s ease both; }
+  @keyframes fade-up { from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);} }
+
+  .welcome-orb { width:90px; height:90px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#fff8e0,var(--star-bright),var(--star-gold),#6a3a00);
+    box-shadow:0 0 40px rgba(201,168,76,0.4),0 0 100px rgba(201,168,76,0.15),0 0 200px rgba(201,168,76,0.05);
+    margin-bottom:28px; animation:orb-pulse 4s ease-in-out infinite; position:relative; }
+  .welcome-orb::after { content:''; position:absolute; inset:-12px; border-radius:50%;
+    border:1px solid rgba(201,168,76,0.2); animation:ring-expand 3s ease-in-out infinite; }
+  @keyframes ring-expand { 0%,100%{transform:scale(1);opacity:0.5;} 50%{transform:scale(1.1);opacity:0.15;} }
+
+  .welcome h2 { font-family:'Cinzel',serif; font-size:32px; font-weight:600; color:var(--star-bright);
+    text-shadow:0 0 40px rgba(201,168,76,0.4); letter-spacing:0.1em; margin-bottom:10px; }
+  .welcome p { font-size:17px; color:var(--text-dim); font-style:italic; max-width:500px; line-height:1.7; margin-bottom:40px; }
+
+  .starter-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:600px; width:100%; }
+  .starter-card { padding:14px 16px; background:rgba(201,168,76,0.03); border:1px solid var(--border);
+    border-radius:10px; cursor:pointer; text-align:left; transition:all 0.25s; color:var(--text-primary); }
+  .starter-card:hover { background:rgba(201,168,76,0.07); border-color:var(--border-bright);
+    transform:translateY(-2px); box-shadow:0 8px 30px rgba(0,0,0,0.3); }
+  .starter-card-icon{font-size:18px;margin-bottom:6px;}
+  .starter-card-text{font-size:13px;line-height:1.5;color:var(--text-dim);}
+  .starter-card-text strong{color:var(--text-primary);font-weight:400;display:block;margin-bottom:3px;}
+
+  /* MESSAGES */
+  .message { display:flex; gap:16px; animation:fade-up 0.4s ease both; }
+  .message.user { flex-direction:row-reverse; }
+  .avatar { width:36px; height:36px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:14px; }
+  .avatar.ai { background:radial-gradient(circle at 35% 35%,var(--star-bright),var(--star-gold),#6a3a00);
+    box-shadow:0 0 15px rgba(201,168,76,0.4); }
+  .avatar.user-av { background:rgba(77,184,255,0.15); border:1px solid rgba(77,184,255,0.3); color:var(--pulsar); }
+
+  .bubble { max-width:72%; padding:14px 18px; border-radius:12px; line-height:1.75; font-size:15px; }
+  .message.ai .bubble { background:rgba(10,22,40,0.8); border:1px solid var(--border);
+    color:var(--text-primary); border-radius:4px 12px 12px 12px; }
+  .message.user .bubble { background:rgba(77,184,255,0.08); border:1px solid rgba(77,184,255,0.2);
+    color:var(--quasar); border-radius:12px 4px 12px 12px; text-align:right; }
+
+  .bubble h1,.bubble h2,.bubble h3 { font-family:'Cinzel',serif; color:var(--star-gold);
+    margin:16px 0 8px; font-size:15px; font-weight:600; letter-spacing:0.05em; }
+  .bubble h1:first-child,.bubble h2:first-child,.bubble h3:first-child{margin-top:0;}
+  .bubble p{margin-bottom:10px;} .bubble p:last-child{margin-bottom:0;}
+  .bubble ul,.bubble ol{padding-left:20px;margin-bottom:10px;} .bubble li{margin-bottom:4px;}
+  .bubble code { font-family:'JetBrains Mono',monospace; font-size:12px;
+    background:rgba(201,168,76,0.08); border:1px solid var(--border); padding:1px 6px; border-radius:3px; color:var(--star-gold); }
+  .bubble pre { background:rgba(2,4,8,0.8); border:1px solid var(--border); border-radius:8px;
+    padding:14px; overflow-x:auto; margin:10px 0; }
+  .bubble pre code{background:none;border:none;padding:0;font-size:12px;color:var(--quasar);}
+  .bubble strong{color:var(--star-bright);font-weight:600;} .bubble em{color:var(--text-dim);font-style:italic;}
+  .bubble hr{border:none;border-top:1px solid var(--border);margin:14px 0;}
+
+  .msg-meta { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--text-faint);
+    letter-spacing:0.1em; text-transform:uppercase; margin-top:5px; }
+  .message.user .msg-meta{text-align:right;}
+
+  /* TYPING */
+  .typing-indicator { display:flex; align-items:center; gap:5px; padding:14px 18px;
+    background:rgba(10,22,40,0.8); border:1px solid var(--border); border-radius:4px 12px 12px 12px; }
+  .typing-dot { width:6px; height:6px; border-radius:50%; background:var(--star-gold);
+    animation:typing 1.4s ease-in-out infinite; }
+  .typing-dot:nth-child(2){animation-delay:0.2s;} .typing-dot:nth-child(3){animation-delay:0.4s;}
+  @keyframes typing { 0%,60%,100%{transform:scale(0.7);opacity:0.4;} 30%{transform:scale(1);opacity:1;} }
+
+  /* INPUT */
+  .input-area { grid-area:input; padding:16px 40px 20px; border-top:1px solid var(--border);
+    background:linear-gradient(0deg,rgba(6,13,26,0.98) 0%,rgba(2,4,8,0.9) 100%);
+    backdrop-filter:blur(20px); }
+  .domain-tag { display:inline-flex; align-items:center; gap:6px; padding:3px 10px;
+    background:rgba(201,168,76,0.08); border:1px solid var(--border); border-radius:20px;
+    font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.15em;
+    color:var(--star-gold); text-transform:uppercase; margin-bottom:10px; }
+  .input-row{display:flex;gap:12px;align-items:flex-end;}
+  .input-wrap{flex:1;position:relative;}
+
+  textarea { width:100%; padding:14px 18px; background:rgba(10,22,40,0.8);
+    border:1px solid var(--border); border-radius:10px; color:var(--text-primary);
+    font-family:'Crimson Pro',serif; font-size:15px; line-height:1.5; resize:none; outline:none;
+    transition:border-color 0.2s,box-shadow 0.2s; min-height:52px; max-height:160px; }
+  textarea::placeholder{color:var(--text-faint);font-style:italic;}
+  textarea:focus{border-color:var(--border-bright);box-shadow:0 0 20px rgba(201,168,76,0.08);}
+
+  .send-btn { width:52px; height:52px; border-radius:10px;
+    background:linear-gradient(135deg,var(--star-gold),#8a5c00); border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:18px;
+    transition:all 0.2s; box-shadow:0 4px 20px rgba(201,168,76,0.2); flex-shrink:0; }
+  .send-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 30px rgba(201,168,76,0.35);}
+  .send-btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+  .input-hint { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--text-faint);
+    letter-spacing:0.1em; text-align:center; margin-top:8px; }
+
+  .domain-badge { display:inline-flex; align-items:center; gap:5px; padding:2px 8px;
+    background:rgba(201,168,76,0.06); border:1px solid var(--border); border-radius:4px;
+    font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--text-dim);
+    letter-spacing:0.1em; text-transform:uppercase; margin-bottom:8px; }
+
+  *{scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+
+  @media(max-width:768px){
+    #app{grid-template-columns:1fr;grid-template-areas:"header" "main" "input";}
+    aside{display:none;} main,.input-area{padding-left:16px;padding-right:16px;}
+    .starter-grid{grid-template-columns:1fr;} .header-stats{display:none;} .bubble{max-width:90%;}
+  }
+</style>
+</head>
+<body>
+<div id="starfield"><canvas id="stars"></canvas></div>
+<div id="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-orb"></div>
+      <div class="logo-text">
+        <h1>OMNISCI</h1>
+        <p>Universal Knowledge Intelligence · xAI</p>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat"><div class="stat-value">13.8 Gyr</div><div class="stat-label">Universe Age</div></div>
+      <div class="stat"><div class="stat-value">93 Bly</div><div class="stat-label">Observable Dia.</div></div>
+      <div class="stat"><div class="stat-value">6,371 km</div><div class="stat-label">Earth Radius</div></div>
+      <div class="stat"><div class="stat-value" id="msg-count">0</div><div class="stat-label">Queries</div></div>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside>
+    <button class="new-chat-btn" onclick="newChat()">✦ New Session</button>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Knowledge Domains</div>
+      <button class="domain-btn active" onclick="setDomain(this,'cosmos','🌌','Cosmos & Universe')">
+        <span class="domain-icon">🌌</span><span class="domain-name">Cosmos & Universe<span class="domain-sub">Galaxies · Stars · Spacetime</span></span>
+      </button>
+      <button class="domain-btn" onclick="setDomain(this,'earth','🌍','Earth Sciences')">
+        <span class="domain-icon">🌍</span><span class="domain-name">Earth Sciences<span class="domain-sub">Geology · Oceans · Atmosphere</span></span>
+      </button>
+      <button class="domain-btn" onclick="setDomain(this,'life','🧬','Life & Biology')">
+        <span class="domain-icon">🧬</span><span class="domain-name">Life & Biology<span class="domain-sub">Evolution · Cells · Ecosystems</span></span>
+      </button>
+      <button class="domain-btn" onclick="setDomain(this,'physics','⚛️','Physics & Math')">
+        <span class="domain-icon">⚛️</span><span class="domain-name">Physics & Mathematics<span class="domain-sub">Quantum · Relativity · Calculus</span></span>
+      </button>
+      <button class="domain-btn" onclick="setDomain(this,'cs','💻','Computer Science')">
+        <span class="domain-icon">💻</span><span class="domain-name">Computer Science<span class="domain-sub">Algorithms · AI · Systems</span></span>
+      </button>
+      <button class="domain-btn" onclick="setDomain(this,'it','🔧','Information Technology')">
+        <span class="domain-icon">🔧</span><span class="domain-name">Information Technology<span class="domain-sub">Networks · Security · DevOps</span></span>
+      </button>
+      <button class="domain-btn" onclick="setDomain(this,'education','🎓','Education Paths')">
+        <span class="domain-icon">🎓</span><span class="domain-name">Education Paths<span class="domain-sub">Careers · Curricula · Skills</span></span>
+      </button>
+      <button class="domain-btn" onclick="setDomain(this,'history','📜','History & Culture')">
+        <span class="domain-icon">📜</span><span class="domain-name">History & Culture<span class="domain-sub">Civilizations · Art · Philosophy</span></span>
+      </button>
+      <button class="domain-btn" onclick="setDomain(this,'chemistry','⚗️','Chemistry & Materials')">
+        <span class="domain-icon">⚗️</span><span class="domain-name">Chemistry & Materials<span class="domain-sub">Elements · Compounds · Reactions</span></span>
+      </button>
+      <button class="domain-btn" onclick="setDomain(this,'medicine','🩺','Medicine & Health')">
+        <span class="domain-icon">🩺</span><span class="domain-name">Medicine & Health<span class="domain-sub">Anatomy · Diseases · Treatment</span></span>
+      </button>
+      <button class="domain-btn" onclick="setDomain(this,'geography','🗺️','World Geography')">
+        <span class="domain-icon">🗺️</span><span class="domain-name">World Geography<span class="domain-sub">Countries · Terrain · Climate</span></span>
+      </button>
+      <button class="domain-btn" onclick="setDomain(this,'general','✦','All Knowledge')">
+        <span class="domain-icon">✦</span><span class="domain-name">All Knowledge<span class="domain-sub">Unrestricted · Everything</span></span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CHAT -->
+  <main id="chat-area">
+    <div class="welcome" id="welcome">
+      <div class="welcome-orb"></div>
+      <h2>What shall we explore?</h2>
+      <p>From the molten core of Earth to the farthest reaches of the observable universe — ask anything.</p>
+      <div class="starter-grid">
+        <div class="starter-card" onclick="sendStarter('How deep is Earth\'s mantle and what happens near the core?')">
+          <div class="starter-card-icon">🌋</div>
+          <div class="starter-card-text"><strong>Earth's Interior</strong>Layers, temperatures, and pressure near the mantle and core</div>
+        </div>
+        <div class="starter-card" onclick="sendStarter('What is the farthest observable point in the universe and how do we know?')">
+          <div class="starter-card-icon">🔭</div>
+          <div class="starter-card-text"><strong>Edge of the Universe</strong>The cosmic horizon and what lies beyond what we can see</div>
+        </div>
+        <div class="starter-card" onclick="sendStarter('What are all possible career paths in computer science and information technology?')">
+          <div class="starter-card-icon">💡</div>
+          <div class="starter-card-text"><strong>CS & IT Careers</strong>Every path from software engineering to cybersecurity</div>
+        </div>
+        <div class="starter-card" onclick="sendStarter('Explain quantum mechanics from first principles, step by step')">
+          <div class="starter-card-icon">⚛️</div>
+          <div class="starter-card-text"><strong>Quantum Mechanics</strong>The strange rules that govern the smallest scale of reality</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- INPUT -->
+  <div class="input-area">
+    <div class="domain-tag" id="domain-tag">🌌 Current Domain: Cosmos & Universe</div>
+    <div class="input-row">
+      <div class="input-wrap">
+        <textarea id="user-input"
+          placeholder="Ask anything — from Earth's core to the edge of the observable universe…"
+          rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      </div>
+      <button class="send-btn" id="send-btn" onclick="sendMessage()">✦</button>
+    </div>
+    <div class="input-hint">ENTER to send · SHIFT+ENTER for new line · Powered by Grok (xAI)</div>
+  </div>
+</div>
+
+<script>
+/* ── STAR FIELD ── */
+(function(){
+  const canvas=document.getElementById('stars');
+  const ctx=canvas.getContext('2d');
+  let stars=[];
+  function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;initStars();}
+  function initStars(){
+    stars=[];
+    const n=Math.floor((canvas.width*canvas.height)/3000);
+    for(let i=0;i<n;i++) stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,
+      r:Math.random()*1.4,a:Math.random(),speed:0.002+Math.random()*0.003,phase:Math.random()*Math.PI*2});
+  }
+  function draw(t){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(const s of stars){
+      const a=s.a*(0.5+0.5*Math.sin(t*s.speed+s.phase));
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(240,208,128,${a})`;ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',resize);
+  resize();requestAnimationFrame(draw);
+})();
+
+/* ── STATE ── */
+let messages=[];
+let currentDomain='cosmos';
+let currentDomainLabel='🌌 Cosmos & Universe';
+let isThinking=false;
+let msgCount=0;
+
+const DOMAIN_PROMPTS={
+  cosmos:`You are OMNISCI, a universal knowledge AI specializing in Cosmos & Universe. You have deep knowledge of: cosmology, astrophysics, galaxies, stars, black holes, dark matter, dark energy, the Big Bang, cosmic microwave background, exoplanets, nebulae, supernovae, spacetime, general and special relativity, the observable universe (93 billion light-years diameter), James Webb Space Telescope discoveries, and everything from subatomic particles to the largest cosmic structures. Provide accurate, detailed, educational answers with scientific context.`,
+  earth:`You are OMNISCI, a universal knowledge AI specializing in Earth Sciences. You have comprehensive knowledge of: Earth's layers (crust, mantle, outer core, inner core), plate tectonics, volcanic activity (magma at 700–1200°C, core at ~5,100°C), the deepest points (Mariana Trench at ~11km, Kola Superdeep Borehole at 12.2km), seismology, mineralogy, oceanography, atmospheric science, climate science, weather systems, soil science, hydrology, and geomorphology.`,
+  life:`You are OMNISCI, a universal knowledge AI specializing in Life Sciences & Biology. You have deep knowledge of: evolution, genetics, molecular biology, cellular biology, ecology, taxonomy, microbiology, zoology, botany, neuroscience, biochemistry, physiology, and the complete tree of life. Explain biological processes from molecular level to ecosystem scale.`,
+  physics:`You are OMNISCI, a universal knowledge AI specializing in Physics & Mathematics. You have deep knowledge of: classical mechanics, electromagnetism, thermodynamics, quantum mechanics, quantum field theory, general relativity, special relativity, particle physics, condensed matter physics, and all areas of mathematics including calculus, linear algebra, differential equations, number theory, topology, abstract algebra, probability, and statistics.`,
+  cs:`You are OMNISCI, a universal knowledge AI specializing in Computer Science. You have comprehensive knowledge of: algorithms and data structures, computational complexity, programming languages, operating systems, computer architecture, compiler design, databases, distributed systems, machine learning, artificial intelligence, computer graphics, NLP, software engineering, formal methods, automata theory, information theory, cryptography, and theoretical computer science. Provide code examples when helpful.`,
+  it:`You are OMNISCI, a universal knowledge AI specializing in Information Technology. You have comprehensive knowledge of: networking (TCP/IP, DNS, HTTP, routing), cybersecurity (penetration testing, cryptography, threat modeling, OWASP), cloud computing (AWS, Azure, GCP), DevOps (CI/CD, Docker, Kubernetes, Terraform), system administration (Linux, Windows Server), databases (SQL, NoSQL), web development, mobile development, IT infrastructure, and enterprise architecture.`,
+  education:`You are OMNISCI, a universal knowledge AI specializing in Education Paths worldwide. You have comprehensive knowledge of: every academic and vocational path from primary through postdoctoral level; career trajectories in STEM, humanities, arts, business, law, medicine, engineering; curriculum structures for different educational systems globally; skills roadmaps for various professions; certification paths; alternative education routes; online learning platforms; and the relationship between education stages and career outcomes.`,
+  history:`You are OMNISCI, a universal knowledge AI specializing in History & Culture. You have deep knowledge of: world history from prehistoric times to present, ancient civilizations, medieval history, the Renaissance, industrial revolution, world wars, cold war, decolonization, contemporary history, cultural history, philosophy (Eastern and Western), art history, music history, literature, religion and mythology, archaeology, and anthropology.`,
+  chemistry:`You are OMNISCI, a universal knowledge AI specializing in Chemistry & Materials Science. You have deep knowledge of: the periodic table, chemical bonding, organic chemistry, inorganic chemistry, physical chemistry, biochemistry, analytical chemistry, polymer science, nanomaterials, semiconductor materials, thermochemistry, electrochemistry, reaction mechanisms, spectroscopy, and industrial chemistry.`,
+  medicine:`You are OMNISCI, a universal knowledge AI specializing in Medicine & Health Sciences. You have comprehensive knowledge of: human anatomy and physiology, pathophysiology, pharmacology, disease mechanisms, diagnostic methods, treatment approaches, surgery, immunology, epidemiology, public health, nursing, mental health, nutrition, and evidence-based medicine. Note that professional consultation is essential for personal medical decisions.`,
+  geography:`You are OMNISCI, a universal knowledge AI specializing in World Geography. You have comprehensive knowledge of: physical geography (mountains, rivers, deserts, oceans, climate zones), political geography (countries, capitals, borders), human geography (population, urbanization, migration), economic geography, cultural geography, regional geography of all continents, and geospatial technology.`,
+  general:`You are OMNISCI, an omniscient universal knowledge AI with expertise spanning ALL domains of human knowledge. Your knowledge encompasses: the entire cosmos from subatomic particles to the observable universe (93 billion light-years), Earth sciences from the inner core (5,100°C) to the stratosphere, all life sciences, physics and mathematics, computer science and IT, all educational and career paths worldwide, history and culture, chemistry, medicine, geography, and every other field of human inquiry. Draw connections across disciplines and provide deep, satisfying, accurate answers to any question.`
+};
+
+/* ── UI ── */
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,160)+'px';}
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
+function setDomain(btn,domain,icon,label){
+  currentDomain=domain; currentDomainLabel=icon+' '+label;
+  document.getElementById('domain-tag').textContent=icon+' Current Domain: '+label;
+  document.querySelectorAll('.domain-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function scrollToBottom(){const c=document.getElementById('chat-area');c.scrollTo({top:c.scrollHeight,behavior:'smooth'});}
+function getTime(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+
+function newChat(){
+  messages=[];msgCount=0;document.getElementById('msg-count').textContent='0';
+  const chat=document.getElementById('chat-area');
+  chat.innerHTML=`<div class="welcome" id="welcome">
+    <div class="welcome-orb"></div>
+    <h2>What shall we explore?</h2>
+    <p>From the molten core of Earth to the farthest reaches of the observable universe — ask anything.</p>
+    <div class="starter-grid">
+      <div class="starter-card" onclick="sendStarter('How deep is Earth\\'s mantle and what happens near the core?')">
+        <div class="starter-card-icon">🌋</div><div class="starter-card-text"><strong>Earth's Interior</strong>Layers, temperatures near mantle and core</div></div>
+      <div class="starter-card" onclick="sendStarter('What is the farthest observable point in the universe?')">
+        <div class="starter-card-icon">🔭</div><div class="starter-card-text"><strong>Edge of the Universe</strong>The cosmic horizon and beyond</div></div>
+      <div class="starter-card" onclick="sendStarter('What are all possible career paths in CS and IT?')">
+        <div class="starter-card-icon">💡</div><div class="starter-card-text"><strong>CS & IT Careers</strong>Every path in tech</div></div>
+      <div class="starter-card" onclick="sendStarter('Explain quantum mechanics from first principles')">
+        <div class="starter-card-icon">⚛️</div><div class="starter-card-text"><strong>Quantum Mechanics</strong>The rules of the smallest reality</div></div>
+    </div></div>`;
+}
+
+function sendStarter(text){document.getElementById('user-input').value=text;sendMessage();}
+
+/* ── MARKDOWN ── */
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function renderMarkdown(text){
+  return text
+    .replace(/```(\w+)?\n?([\s\S]*?)```/g,(_,lang,code)=>`<pre><code>${escHtml(code.trim())}</code></pre>`)
+    .replace(/`([^`]+)`/g,(_,c)=>`<code>${escHtml(c)}</code>`)
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^---$/gm,'<hr>')
+    .replace(/^[-•] (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g,'<ul>$&</ul>')
+    .replace(/^\d+\. (.+)$/gm,'<li>$1</li>')
+    .replace(/\n\n/g,'</p><p>')
+    .replace(/^(?!<[huplo]|<\/[huplo]|<pre|<hr)(.+[^\n])$/gm,(m,line)=>
+      (line.trim()&&!line.trim().startsWith('<'))?`<p>${line}</p>`:line);
+}
+
+/* ── DOM ── */
+function addMessageToDOM(role,content,domain){
+  const welcome=document.getElementById('welcome');
+  if(welcome)welcome.remove();
+  const chat=document.getElementById('chat-area');
+  const div=document.createElement('div');
+  div.className=`message ${role}`;
+  const isAI=role==='ai';
+  const avatarHTML=isAI?`<div class="avatar ai">✦</div>`:`<div class="avatar user-av">◈</div>`;
+  const bubbleContent=isAI?renderMarkdown(content):escHtml(content).replace(/\n/g,'<br>');
+  const badgeHTML=isAI&&domain?`<div class="domain-badge">${domain}</div>`:'';
+  div.innerHTML=`${avatarHTML}<div>${badgeHTML}<div class="bubble">${bubbleContent}</div><div class="msg-meta">${getTime()}</div></div>`;
+  chat.appendChild(div);scrollToBottom();return div;
+}
+
+function addTypingIndicator(){
+  const welcome=document.getElementById('welcome');if(welcome)welcome.remove();
+  const chat=document.getElementById('chat-area');
+  const div=document.createElement('div');div.className='message ai';div.id='typing-msg';
+  div.innerHTML=`<div class="avatar ai">✦</div><div class="typing-indicator">
+    <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  chat.appendChild(div);scrollToBottom();
+}
+function removeTypingIndicator(){const t=document.getElementById('typing-msg');if(t)t.remove();}
+
+/* ── SEND ── */
+async function sendMessage(){
+  if(isThinking)return;
+  const input=document.getElementById('user-input');
+  const text=input.value.trim();
+  if(!text)return;
+  input.value='';input.style.height='auto';
+  isThinking=true;msgCount++;
+  document.getElementById('msg-count').textContent=msgCount;
+  document.getElementById('send-btn').disabled=true;
+  addMessageToDOM('user',text,null);
+  messages.push({role:'user',content:text});
+  addTypingIndicator();
+
+  try{
+    const systemPrompt = DOMAIN_PROMPTS[currentDomain]||DOMAIN_PROMPTS.general;
+
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system: systemPrompt,
+        messages
+      })
+    });
+
+    const data = await response.json();
+    if(data.error) throw new Error(data.error);
+    if(!data.reply) throw new Error('Empty response from server.');
+
+    const reply = data.reply;
+    messages.push({role:'assistant', content:reply});
+    removeTypingIndicator();
+    addMessageToDOM('ai', reply, currentDomainLabel);
+  }catch(err){
+    removeTypingIndicator();
+    addMessageToDOM('ai',`**Error:** ${err.message||'Connection failed.'}`,currentDomainLabel);
+  }
+  isThinking=false;
+  document.getElementById('send-btn').disabled=false;
+  document.getElementById('user-input').focus();
+}
+</script>
+</body>
+</html>

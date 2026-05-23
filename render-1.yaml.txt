@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: omnisci-xai
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: XAI_API_KEY
+        sync: false
+    healthCheckPath: /health
